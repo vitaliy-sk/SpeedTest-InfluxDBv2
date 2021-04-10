@@ -28,7 +28,7 @@ class InfluxdbSpeedtest():
         with a 404.  If the user doesn't have permission it fails with 401
         :return:
         """
-        if (config.influx_version == 1)
+        if config.influx_version == 1:
             influx = InfluxDBClient(
                 config.influx_address,
                 config.influx_port,
@@ -38,7 +38,7 @@ class InfluxdbSpeedtest():
                 username=config.influx_user,
                 password=config.influx_password,
                 timeout=5)
-        else if (config.influx_version == 2)
+        elif config.influx_version == 2:
             influx = InfluxDBClient2(
                 config.influx_address,
                 config.influx_port,
@@ -58,6 +58,7 @@ class InfluxdbSpeedtest():
             if isinstance(e, ConnectTimeout):
                 log.critical('Unable to connect to InfluxDB at the provided address (%s)', config.influx_address)
             elif e.code == 401:
+                log.critical(e)
                 log.critical('Unable to connect to InfluxDB with provided credentials')
             else:
                 log.critical('Failed to connect to InfluxDB for unknown reason')
