@@ -13,7 +13,7 @@ WORKDIR /src
 
 RUN pip install cython \
      && pip install -r requirements.txt \
-     && apt-get remove gcc \
+     && apt-get remove gcc -y \
      && apt-get clean
 
 CMD ["python", "-u", "/src/influxspeedtest.py"]
