@@ -1,7 +1,7 @@
 **Speedtest.net Collector For InfluxDB and Grafana**
 ------------------------------
 
-![Screenshot](https://raw.githubusercontent.com/winklevos/Speedtest-for-InfluxDB-and-Grafana/master/dashboard-screenshot.PNG)
+![Screenshot](https://raw.githubusercontent.com/mils180/Speedtest-for-InfluxDB-and-Grafana/master/dashboard-screenshot.PNG)
 
 This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb
 
@@ -15,6 +15,9 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Address        |InfluxDB host or container name                                                                                     |
+|Token        |InfluxDB2.0 Token with Read/Write                                                                                     |
+|Org        |InfluxDB2.0 Organization to connect to                                                                                     |
+|Bucket        |InfluxDB2.0 Bucket to write to                                                                                     |
 |Port           |InfluxDB port default 8086                                                                                          |
 |Database       |Database to write collected stats to                                                                                |
 |Username       |User that has access to the database                                                                                |
@@ -32,7 +35,7 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 
 ## Requirements
 
-[influxdb](https://hub.docker.com/_/influxdb) version 1.8.4 or before
+[influxdb](https://hub.docker.com/_/influxdb) 
 
 [grafana](https://hub.docker.com/r/grafana/grafana)
 
@@ -40,9 +43,9 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 ## Usage 
 
 **Docker Compose**
-*[docker-compose.yml](https://github.com/winklevos/Speedtest-for-InfluxDB-and-Grafana/blob/master/docker-compose.yml) example contains config including these requirements*
+*[docker-compose.yml](https://github.com/mils180/Speedtest-for-InfluxDB-and-Grafana/blob/master/docker-compose.yml) example contains config including these requirements*
 
-download and configure [config.ini](https://github.com/winklevos/Speedtest-for-InfluxDB-and-Grafana/blob/master/config.ini) in the same directory as your docker-compose file  
+download and configure [config.ini](https://github.com/mils180/Speedtest-for-InfluxDB-and-Grafana/blob/master/config.ini) in the same directory as your docker-compose file  
 
 
 **Manual**
@@ -50,8 +53,10 @@ download and configure [config.ini](https://github.com/winklevos/Speedtest-for-I
 --name="speedtest" \
 -v config.ini:/src/config.ini \
 --restart="unless-stopped" \
-winklevos/speedtest-for-influxdb-and-grafana
+mils180/speedtest-for-influxdb-and-grafana
 ```
+
+**Special Thanks to Winklevos for the latest code
 
 <!-- ## Direct Usage
 
