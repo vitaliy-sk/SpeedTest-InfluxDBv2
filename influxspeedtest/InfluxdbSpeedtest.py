@@ -27,6 +27,7 @@ class InfluxdbSpeedtest():
         with a 404.  If the user doesn't have permission it fails with 401
         :return:
         """
+        log.debug('Attempting Connection with ' config.influx_version)
         if config.influx_version == 1:
             influx = InfluxDBClient(
                 config.influx_address,
