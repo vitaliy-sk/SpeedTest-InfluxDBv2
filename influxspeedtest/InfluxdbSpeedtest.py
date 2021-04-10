@@ -5,12 +5,11 @@ import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from influxdb_client import InfluxDBClient as InfluxDBClient2
-
+from influxdb_client.client.write_api import SYNCHRONOUS
 from requests import ConnectTimeout, ConnectionError
 
 from influxspeedtest.common import log
 from influxspeedtest.config import config
-
 
 class InfluxdbSpeedtest():
 
@@ -45,13 +44,16 @@ class InfluxdbSpeedtest():
             else:
                 protocol="http://"    
             influx = InfluxDBClient2(
-                url= protocol + config.influx_address + ":" + config.influx_port,
+                url= protocol + config.influx_address + ":" + str(config.influx_port),
                 org=config.influx_org,
                 token=config.influx_token,
                 bucket=config.influx_bucket)
         try:
             log.debug('Testing connection to InfluxDb using provided credentials')
-            influx.get_list_users()  # TODO - Find better way to test connection and permissions
+            if config.influx_version == 1:
+                influx.get_list_users()  # TODO - Find better way to test connection and permissions
+            else:
+                influx.health()
             log.debug('Successful connection to InfluxDb')
         except (ConnectTimeout, InfluxDBClientError, ConnectionError) as e:
             if isinstance(e, ConnectTimeout):
@@ -179,7 +181,11 @@ class InfluxdbSpeedtest():
         log.debug(json_data)
 
         try:
-            self.influx_client.write_points(json_data)
+            if config.influx_version == 1:
+                self.influx_client.write_points(json_data)
+            else:
+                write_api = self.influx_client.write_api(write_options=SYNCHRONOUS)
+                write_api.write(config.influx_bucket,config.influx_org,json_data)
         except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as e:
             if hasattr(e, 'code') and e.code == 404:
                 log.error('Database %s Does Not Exist.  Attempting To Create', config.influx_database)
