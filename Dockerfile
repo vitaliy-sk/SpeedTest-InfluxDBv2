@@ -1,5 +1,5 @@
 FROM python:alpine
-LABEL maintainer="winklevos@outlook.com"
+LABEL maintainer="msoufastai@gmail.com"
 
 VOLUME /src/
 COPY influxspeedtest.py requirements.txt config.ini /src/

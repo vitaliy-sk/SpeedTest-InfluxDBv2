@@ -4,6 +4,9 @@ import time
 import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
+from influxdb_client import InfluxDBClient2
+from influxdb_client.exceptions import InfluxDBClientError2, InfluxDBServerError2
+
 from requests import ConnectTimeout, ConnectionError
 
 from influxspeedtest.common import log
@@ -25,17 +28,28 @@ class InfluxdbSpeedtest():
         with a 404.  If the user doesn't have permission it fails with 401
         :return:
         """
-
-        influx = InfluxDBClient(
-            config.influx_address,
-            config.influx_port,
-            database=config.influx_database,
-            ssl=config.influx_ssl,
-            verify_ssl=config.influx_verify_ssl,
-            username=config.influx_user,
-            password=config.influx_password,
-            timeout=5
-        )
+        if (config.influx_version == 1)
+            influx = InfluxDBClient(
+                config.influx_address,
+                config.influx_port,
+                database=config.influx_database,
+                ssl=config.influx_ssl,
+                verify_ssl=config.influx_verify_ssl,
+                username=config.influx_user,
+                password=config.influx_password,
+                timeout=5)
+        else if (config.influx_version == 2)
+            influx = InfluxDBClient2(
+                config.influx_address,
+                config.influx_port,
+                org=config.influx_org,
+                token=config.influx_token,
+                bucket=config.influx_bucket,
+                ssl=config.influx_ssl,
+                verify_ssl=config.influx_verify_ssl,
+                username=config.influx_user,
+                password=config.influx_password,
+                timeout=5)
         try:
             log.debug('Testing connection to InfluxDb using provided credentials')
             influx.get_list_users()  # TODO - Find better way to test connection and permissions

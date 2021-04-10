@@ -3,7 +3,7 @@ version: '3.9'
 services:
   
   influxdb:
-    image: influxdb:1.8.4
+    image: influxdb
     container_name: influxdb
     ports:
       - '8086:8086'
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
  
   speedtest:
-    image: winklevos/speedtest-for-influxdb-and-grafana:latest
+    image: milad-soufastai/speedtest-for-influxdb-and-grafana:latest
     container_name: speedtest
     depends_on:
       - influxdb
