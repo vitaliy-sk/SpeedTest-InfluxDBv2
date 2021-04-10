@@ -6,6 +6,11 @@ COPY influxspeedtest.py requirements.txt config.ini /src/
 ADD influxspeedtest /src/influxspeedtest
 WORKDIR /src 
 
-RUN pip install -r requirements.txt 
+RUN deb add --no-cache --virtual .build-deps gcc musl-dev \
+     && pip install cython \
+     && pip install -r requirements.txt \
+     && deb del .build-deps gcc musl-dev
+
+
 
 CMD ["python", "-u", "/src/influxspeedtest.py"]
