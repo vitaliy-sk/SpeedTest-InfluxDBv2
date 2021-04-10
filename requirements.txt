@@ -1,5 +1,6 @@
 influxdb
 influxdb-client[ciso]
+numpy
 pandas
 speedtest-cli
 requests

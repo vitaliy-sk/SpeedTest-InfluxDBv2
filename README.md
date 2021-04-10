@@ -16,7 +16,7 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Address        |InfluxDB host or container name                                                                                     |
 |Token        |InfluxDB2.0 Token with Read/Write                                                                                     |
-|Org        |InfluxDB2.0 Organization to connect to                                                                                     |
+|Organization        |InfluxDB2.0 Organization to connect to                                                                                     |
 |Bucket        |InfluxDB2.0 Bucket to write to                                                                                     |
 |Port           |InfluxDB port default 8086                                                                                          |
 |Database       |Database to write collected stats to                                                                                |
