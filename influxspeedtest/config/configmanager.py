@@ -18,6 +18,7 @@ class ConfigManager():
 
         self._load_config_values()
         print('Configuration Successfully Loaded')
+        print (self.influx_version)
 
     def _load_config_values(self):
 
