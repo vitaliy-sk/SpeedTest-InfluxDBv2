@@ -8,6 +8,7 @@
 .idea/**/dictionaries
 .idea/**/shelf
 venv
+.vscode/*
 
 # Generated files
 .idea/**/contentModel.xml
