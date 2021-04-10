@@ -18,7 +18,6 @@ class ConfigManager():
 
         self._load_config_values()
         print('Configuration Successfully Loaded')
-        print (self.influx_version)
 
     def _load_config_values(self):
 
@@ -28,8 +27,8 @@ class ConfigManager():
         # InfluxDB
         self.influx_version = self.config['INFLUXDB'].getint('Version', fallback=1)
         self.influx_address = self.config['INFLUXDB']['Address']
-        self.influx_org = self.config['INFLUXDB']['Organization']
-        self.influx_token = self.config['INFLUXDB']['Token']
+        self.influx_org = self.config['INFLUXDB'].get('Organization', fallback='No_Organization_Defined')
+        self.influx_token = self.config['INFLUXDB'].get('Token', fallback='No_Token_Defined')
         self.influx_bucket = self.config['INFLUXDB'].get('Bucket', fallback='speedtests')
         self.influx_timeout = self.config['INFLUXDB'].getint('Timeout', fallback=6000)
         self.influx_port = self.config['INFLUXDB'].getint('Port', fallback=8086)

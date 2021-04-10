@@ -39,17 +39,16 @@ class InfluxdbSpeedtest():
                 timeout=5)
         elif config.influx_version == 2:
             log.debug('InfluxDB V2.0 is selected')
+            protocol = "http://"
+            if config.influx_ssl:
+                protocol="https://"
+            else:
+                protocol="http://"    
             influx = InfluxDBClient2(
-                config.influx_address,
-                config.influx_port,
+                url= protocol + config.influx_address + ":" + config.influx_port,
                 org=config.influx_org,
                 token=config.influx_token,
-                bucket=config.influx_bucket,
-                ssl=config.influx_ssl,
-                verify_ssl=config.influx_verify_ssl,
-                username=config.influx_user,
-                password=config.influx_password,
-                timeout=5)
+                bucket=config.influx_bucket)
         try:
             log.debug('Testing connection to InfluxDb using provided credentials')
             influx.get_list_users()  # TODO - Find better way to test connection and permissions
