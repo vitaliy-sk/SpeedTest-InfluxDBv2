@@ -1,5 +1,6 @@
 influxdb
 influxdb-client[ciso]
+pandas
 speedtest-cli
 requests
 configparser

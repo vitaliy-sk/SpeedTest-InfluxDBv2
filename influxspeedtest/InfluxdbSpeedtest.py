@@ -4,8 +4,9 @@ import time
 import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-from influxdb_client import InfluxDBClient2
-from influxdb_client.exceptions import InfluxDBClientError2, InfluxDBServerError2
+from influxdb_client import InfluxDBClient as InfluxDBClient2
+from influxdb_client.extras.exceptions import InfluxDBClientError as InfluxDBClientError2
+from influxdb_client.extras.exceptions import InfluxDBServerError as InfluxDBServerError2
 
 from requests import ConnectTimeout, ConnectionError
 
@@ -39,6 +40,7 @@ class InfluxdbSpeedtest():
                 password=config.influx_password,
                 timeout=5)
         elif config.influx_version == 2:
+            log.debug('InfluxDB V2.0 is selected')
             influx = InfluxDBClient2(
                 config.influx_address,
                 config.influx_port,
