@@ -43,11 +43,12 @@ class InfluxdbSpeedtest():
                 protocol="https://"
             else:
                 protocol="http://"    
+            
             influx = InfluxDBClient2(
                 url= protocol + config.influx_address + ":" + str(config.influx_port),
-                org=config.influx_org,
                 token=config.influx_token,
-                bucket=config.influx_bucket)
+                org=config.influx_org)
+            
         try:
             log.debug('Testing connection to InfluxDb using provided credentials')
             if config.influx_version == 1:
