@@ -2,6 +2,7 @@
 ------------------------------
 
 This tool is a wrapper for speedtest-cli which allows you to run periodic speedtets and save the results to Influxdb
+**+ Extended with support InfluxDB v2**
 
 ## Configuration within config.ini
 
@@ -40,3 +41,22 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 
 
 ## Usage 
+
+1. Create config.ini using [reference](https://github.com/vitaliy-sk/SpeedTest-InfluxDBv2/blob/master/config.ini)
+2. Run with docker or use compose below 
+
+Sample docker-compose file
+
+```yaml
+version: '3.7'
+
+services:
+
+  speedtest:
+    image: techh/speedtest-influxdb2:master
+    restart: always
+    network_mode: host 
+    volumes:
+      - ./config.ini:/config.ini
+```
+
