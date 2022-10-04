@@ -85,7 +85,7 @@ class InfluxdbSpeedtest():
             server = server.split() # Single server to list
 
         try:
-            self.speedtest = speedtest.Speedtest()
+            self.speedtest = speedtest.Speedtest(secure=True)
         except speedtest.ConfigRetrievalError:
             log.critical('Failed to get speedtest.net configuration.  Aborting')
             sys.exit(1)
