@@ -1,5 +1,4 @@
 influxdb
 influxdb-client==1.23.0
-speedtest-cli
 requests
 configparser

@@ -1,7 +1,12 @@
+import json
+import os
+import platform
+import shutil
+import subprocess
 import sys
 import time
+from pathlib import Path
 
-import speedtest
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 from influxdb_client import InfluxDBClient as InfluxDBClient2
@@ -11,12 +16,19 @@ from requests import ConnectTimeout, ConnectionError
 from influxspeedtest.common import log
 from influxspeedtest.config import config
 
+SPEEDTEST_TIMEOUT = 300
+
+
+class SpeedtestCliError(Exception):
+    pass
+
+
 class InfluxdbSpeedtest():
 
     def __init__(self):
 
         self.influx_client = self._get_influx_connection()
-        self.speedtest = None
+        self.speedtest_binary = self._get_speedtest_binary()
         self.results = None
 
     def _get_influx_connection(self):
@@ -69,43 +81,141 @@ class InfluxdbSpeedtest():
 
         return influx
 
-    def setup_speedtest(self, server=None):
+    def _get_speedtest_binary(self):
         """
-        Initializes the Speed Test client with the provided server
-        :param server: Int
-        :return: None
+        Finds the Ookla Speedtest CLI binary.
+        :return: str
         """
-        speedtest.build_user_agent()
+        candidates = []
+        configured_binary = os.getenv('SPEEDTEST_BINARY')
+        if configured_binary:
+            candidates.append(Path(configured_binary).expanduser())
 
-        log.debug('Setting up SpeedTest.net client')
+        repo_root = Path(__file__).resolve().parent.parent
+        system = platform.system()
+        if system == 'Linux':
+            candidates.append(repo_root / 'speedtest-cli' / 'ookla-speedtest-linux-x86_64' / 'speedtest')
+        elif system == 'Darwin':
+            candidates.append(repo_root / 'speedtest-cli' / 'ookla-speedtest-macosx-universal' / 'speedtest')
 
-        if server is None:
-            server = []
-        else:
-            server = server.split() # Single server to list
+        path_binary = shutil.which('speedtest')
+        if path_binary:
+            candidates.append(Path(path_binary))
+
+        for candidate in candidates:
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                log.debug('Using Speedtest CLI binary: %s', candidate)
+                return str(candidate)
+
+        log.critical('Unable to find Speedtest CLI binary. Set SPEEDTEST_BINARY or install speedtest in PATH.')
+        sys.exit(1)
+
+    def _speedtest_command(self, server=None):
+        """
+        Builds the Speedtest CLI command.
+        :param server: Server to test against
+        :return: list
+        """
+        command = [
+            self.speedtest_binary,
+            '--accept-license',
+            '--accept-gdpr',
+            '--format=json',
+            '--progress=no'
+        ]
+
+        server_id = str(server).strip() if server else ''
+        if server_id:
+            command.extend(['--server-id', server_id])
+
+        return command
+
+    def _parse_speedtest_output(self, output):
+        """
+        Parses JSON output from Speedtest CLI.
+        :param output: str
+        :return: dict
+        """
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError:
+            start = output.find('{')
+            end = output.rfind('}')
+            if start != -1 and end != -1:
+                return json.loads(output[start:end + 1])
+            raise
+
+    def _run_speedtest_cli(self, server=None):
+        """
+        Runs Speedtest CLI and returns its JSON result.
+        :param server: Server to test against
+        :return: dict
+        """
+        command = self._speedtest_command(server)
+        log.debug('Running Speedtest CLI: %s', ' '.join(command))
 
         try:
-            self.speedtest = speedtest.Speedtest(secure=True)
-        except speedtest.ConfigRetrievalError:
-            log.critical('Failed to get speedtest.net configuration.  Aborting')
-            sys.exit(1)
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=SPEEDTEST_TIMEOUT
+            )
+        except subprocess.TimeoutExpired as e:
+            raise SpeedtestCliError('Speedtest CLI timed out after {} seconds'.format(e.timeout))
+        except OSError as e:
+            raise SpeedtestCliError('Unable to run Speedtest CLI: {}'.format(e))
 
-        self.speedtest.get_servers(server)
+        output = completed.stdout.strip()
+        error_output = completed.stderr.strip()
+        if completed.returncode != 0:
+            raise SpeedtestCliError(error_output or output or 'Exited with code {}'.format(completed.returncode))
 
-        log.debug('Picking the closest server')
+        try:
+            return self._parse_speedtest_output(output or error_output)
+        except json.JSONDecodeError as e:
+            raise SpeedtestCliError('Unable to parse Speedtest CLI JSON output: {}'.format(e))
 
-        self.speedtest.get_best_server()
+    def _normalize_results(self, raw_results, share=False):
+        """
+        Converts Ookla Speedtest CLI JSON to the legacy result shape.
+        :param raw_results: dict
+        :param share: bool
+        :return: dict
+        """
+        server = raw_results.get('server', {})
+        download = raw_results.get('download', {})
+        upload = raw_results.get('upload', {})
+        ping = raw_results.get('ping', {})
+        result = raw_results.get('result', {})
 
-        log.info('Selected Server %s in %s', self.speedtest.best['id'], self.speedtest.best['name'])
+        server_location = server.get('location') or server.get('name') or ''
+        server_sponsor = server.get('name') or ''
 
-        self.results = self.speedtest.results
+        return {
+            'download': download.get('bandwidth', 0) * 8,
+            'bytes_received': download.get('bytes', 0),
+            'upload': upload.get('bandwidth', 0) * 8,
+            'bytes_sent': upload.get('bytes', 0),
+            'server': {
+                'latency': ping.get('latency', 0),
+                'id': str(server.get('id', '')),
+                'name': server_location,
+                'country': server.get('country', ''),
+                'sponsor': server_sponsor
+            },
+            'client': {
+                'isp': raw_results.get('isp', '')
+            },
+            'share': result.get('url') if share else None
+        }
 
     def send_results(self):
         """
         Formats the payload to send to InfluxDB
         :rtype: None
         """
-        result_dict = self.results.dict()
+        result_dict = self.results
 
         input_points = [
             {
@@ -144,26 +254,15 @@ class InfluxdbSpeedtest():
         log.info('Starting Speed Test For Server %s', server)
 
         try:
-            self.setup_speedtest(server)
-        except speedtest.NoMatchedServers:
-            log.error('No matched servers: %s', server)
-            return
-        except speedtest.ServersRetrievalError:
-            log.critical('Cannot retrieve speedtest.net server list. Aborting')
-            return
-        except speedtest.InvalidServerIDType:
-            log.error('%s is an invalid server type, must be int', server)
+            raw_results = self._run_speedtest_cli(server)
+        except SpeedtestCliError as e:
+            log.error('Speedtest CLI failed for server %s: %s', server, e)
             return
 
-        log.info('Starting download test')
-        self.speedtest.download()
-        log.info('Starting upload test')
-        self.speedtest.upload()
-        if(share):
-            self.results.share()
+        self.results = self._normalize_results(raw_results, share)
         self.send_results()
 
-        results = self.results.dict()
+        results = self.results
         log.info('Download: %sMbps - Upload: %sMbps - Latency: %sms - Share: %s',
                  round(results['download'] / 1000000, 2),
                  round(results['upload'] / 1000000, 2),
