@@ -192,12 +192,12 @@ class InfluxdbSpeedtest():
         server_sponsor = server.get('name') or ''
 
         return {
-            'download': download.get('bandwidth', 0) * 8,
+            'download': float((download.get('bandwidth') or 0) * 8),
             'bytes_received': download.get('bytes', 0),
-            'upload': upload.get('bandwidth', 0) * 8,
+            'upload': float((upload.get('bandwidth') or 0) * 8),
             'bytes_sent': upload.get('bytes', 0),
             'server': {
-                'latency': ping.get('latency', 0),
+                'latency': float(ping.get('latency') or 0),
                 'id': str(server.get('id', '')),
                 'name': server_location,
                 'country': server.get('country', ''),
