@@ -39,11 +39,20 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 
 [grafana](https://hub.docker.com/r/grafana/grafana)
 
+[uv](https://docs.astral.sh/uv/) for local Python dependency management
+
 
 ## Usage 
 
 1. Create config.ini using [reference](https://github.com/vitaliy-sk/SpeedTest-InfluxDBv2/blob/master/config.ini)
 2. Run with docker or use compose below 
+
+Run locally with uv:
+
+```shell
+uv sync
+uv run python influxspeedtest.py
+```
 
 Sample docker-compose file
 
@@ -59,4 +68,3 @@ services:
     volumes:
       - ./config.ini:/config.ini
 ```
-

@@ -1,0 +1,15 @@
+[project]
+name = "speedtest-influxdbv2"
+version = "0.1.0"
+description = "Speedtest.net collector for InfluxDB and Grafana"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "configparser",
+    "influxdb",
+    "influxdb-client==1.23.0",
+    "requests",
+]
+
+[tool.uv]
+package = false

@@ -1,4 +1,0 @@
-influxdb
-influxdb-client==1.23.0
-requests
-configparser

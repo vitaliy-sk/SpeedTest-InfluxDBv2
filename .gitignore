@@ -9,6 +9,7 @@
 .idea/**/shelf
 venv
 .venv/*
+.uv-cache/
 .vscode/*
 
 # Generated files
