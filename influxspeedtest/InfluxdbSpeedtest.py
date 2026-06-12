@@ -25,9 +25,10 @@ class SpeedtestCliError(Exception):
 
 class InfluxdbSpeedtest():
 
-    def __init__(self):
+    def __init__(self, skip_influxdb=False):
 
-        self.influx_client = self._get_influx_connection()
+        self.skip_influxdb = skip_influxdb
+        self.influx_client = None if skip_influxdb else self._get_influx_connection()
         self.speedtest_binary = self._get_speedtest_binary()
         self.results = None
 
@@ -176,18 +177,16 @@ class InfluxdbSpeedtest():
         except json.JSONDecodeError as e:
             raise SpeedtestCliError('Unable to parse Speedtest CLI JSON output: {}'.format(e))
 
-    def _normalize_results(self, raw_results, share=False):
+    def _normalize_results(self, raw_results):
         """
         Converts Ookla Speedtest CLI JSON to the legacy result shape.
         :param raw_results: dict
-        :param share: bool
         :return: dict
         """
         server = raw_results.get('server', {})
         download = raw_results.get('download', {})
         upload = raw_results.get('upload', {})
         ping = raw_results.get('ping', {})
-        result = raw_results.get('result', {})
 
         server_location = server.get('location') or server.get('name') or ''
         server_sponsor = server.get('name') or ''
@@ -206,8 +205,7 @@ class InfluxdbSpeedtest():
             },
             'client': {
                 'isp': raw_results.get('isp', '')
-            },
-            'share': result.get('url') if share else None
+            }
         }
 
     def send_results(self):
@@ -230,23 +228,21 @@ class InfluxdbSpeedtest():
                     #'server': result_dict['server']['id'],
                     #'server_name': result_dict['server']['name'],
                     #'server_country': result_dict['server']['country'],
-                    #'server_sponsor': result_dict['server']['sponsor']#,
-                    # 'result_url': result_dict['share']
+                    #'server_sponsor': result_dict['server']['sponsor']
                 },
                 'tags': {
                     'server': result_dict['server']['id'],
                     'server_name': result_dict['server']['name'],
                     'server_country': result_dict['server']['country'],
                     'server_sponsor': result_dict['server']['sponsor'],
-                    'isp': result_dict['client']['isp'],
-                    'result_url': result_dict['share']
+                    'isp': result_dict['client']['isp']
                 }
             }
         ]
 
         self.write_influx_data(input_points)
 
-    def run_speed_test(self, server=None, share=False):
+    def run_speed_test(self, server=None):
         """
         Performs the speed test with the provided server
         :param server: Server to test against
@@ -257,18 +253,19 @@ class InfluxdbSpeedtest():
             raw_results = self._run_speedtest_cli(server)
         except SpeedtestCliError as e:
             log.error('Speedtest CLI failed for server %s: %s', server, e)
-            return
+            return False
 
-        self.results = self._normalize_results(raw_results, share)
+        self.results = self._normalize_results(raw_results)
         self.send_results()
 
         results = self.results
-        log.info('Download: %sMbps - Upload: %sMbps - Latency: %sms - Share: %s',
+        log.info('Download: %sMbps - Upload: %sMbps - Latency: %sms',
                  round(results['download'] / 1000000, 2),
                  round(results['upload'] / 1000000, 2),
-                 results['server']['latency'],
-                 results['share']
+                 results['server']['latency']
                  )
+
+        return True
 
 
 
@@ -279,6 +276,11 @@ class InfluxdbSpeedtest():
         :return: None
         """
         log.debug(json_data)
+
+        if self.skip_influxdb:
+            print('InfluxDB write skipped. Payload that would be written:')
+            print(json.dumps(json_data, indent=2, sort_keys=True))
+            return
 
         try:
             if config.influx_version == 1:
@@ -302,9 +304,9 @@ class InfluxdbSpeedtest():
 
         while True:
             if not config.servers:
-                self.run_speed_test(share=config.share)
+                self.run_speed_test()
             else:
                 for server in config.servers:
-                    self.run_speed_test(server, config.share)
+                    self.run_speed_test(server)
             log.info('Waiting %s seconds until next test', config.delay)
             time.sleep(config.delay)

@@ -820,12 +820,6 @@
             },
             {
               "params": [
-                "result_url"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
                 "none"
               ],
               "type": "fill"

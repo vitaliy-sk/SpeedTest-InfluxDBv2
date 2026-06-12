@@ -10,6 +10,7 @@
 venv
 .venv/*
 .uv-cache/
+.DS_Store
 .vscode/*
 
 # Generated files

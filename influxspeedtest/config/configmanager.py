@@ -46,4 +46,3 @@ class ConfigManager():
         test_server = self.config['SPEEDTEST'].get('Server', fallback=None)
         if test_server:
             self.servers = test_server.split(',')
-        self.share = self.config['SPEEDTEST'].getboolean('Share', fallback=False)

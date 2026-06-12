@@ -26,7 +26,6 @@ This tool is a wrapper for speedtest-cli which allows you to run periodic speedt
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
 |Server         |Comma sperated list of servers.  Leave blank for auto                                                               |
-|Share          |Upload results to speedtest.net and retrieve url                                                                    |
 #### LOGGING
 |Key            |Description                                                                                                         |
 |:--------------|:-------------------------------------------------------------------------------------------------------------------|
